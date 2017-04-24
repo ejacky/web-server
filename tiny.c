@@ -145,7 +145,7 @@ void doit(int fd)
 	
 	fprintf(stderr, "strcasecmp:%d", strcasecmp(method, "GET")); 
 
-	if (strcasecmp(method, "GET")) {
+	if (strcasecmp(method, "GET")) { // Èô²»Îª GET 
 		fprintf(stderr, "haha"); 
 
 		client_error(fd);
