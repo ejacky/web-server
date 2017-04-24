@@ -1,2 +1,2 @@
 # tiny-server
-a web server  , write by c language
+a web server  , written by c language
