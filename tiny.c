@@ -11,6 +11,7 @@
 
 /* 头文件 */
 #define MAXLINE 8192
+#define MAXBUF 8192
 #define RIO_BUFSIZE 8192
 
 /* 通用函数 */
@@ -54,6 +55,28 @@ static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n)
 	return cnt; 
 }
 
+ssize_t rio_written(int fd, void *usrbuf, size_t n)
+{
+	size_t nleft = n;
+	ssize_t nwritten;
+	char *bufp = usrbuf;
+	
+	while (nleft > 0) {
+		if ((nwritten = write(fd, bufp, nleft)) <=0) {
+			if (errno == EINTR) nwritten = 0;
+			else return -1; 
+		}
+		nleft -= nwritten;
+		bufp += nwritten;
+	}
+	return n;
+}
+
+void Rio_written(int fd, void *usrbuf, size_t n)
+{
+	if (rio_written(fd, usrbuf, n) != n) unix_error("Rio_written error");
+}
+
 ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
 {
 	int n, rc;
@@ -75,6 +98,7 @@ ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
 /* 主文件 */ 
 void doit(int fd);
 int open_listenfd(int port);
+void client_error(int fd);
 
 int main(int argc, char **argv)
 {
@@ -118,6 +142,15 @@ void doit(int fd)
 	fprintf(stderr, "||method:%s", method);
 	fprintf(stderr, "||method:%s", uri);
 	fprintf(stderr, "||method:%s", version);
+	
+	fprintf(stderr, "strcasecmp:%d", strcasecmp(method, "GET")); 
+
+	if (strcasecmp(method, "GET")) {
+		fprintf(stderr, "haha"); 
+
+		client_error(fd);
+		return ;
+	}
 }
 
 int open_listenfd(int port)
@@ -148,5 +181,24 @@ int open_listenfd(int port)
 		return -1;
 	
 	return listenfd;
+}
+
+void client_error(int fd) 
+{
+	char buf[MAXLINE], body[MAXBUF];
+    
+    // HEADER
+    sprintf(buf, "HTTP/1.0 501 Method Not Implemented\r\n");
+    Rio_written(fd, buf, strlen(buf));
+    sprintf(buf, "Server: Tiny Server\r\n");
+    Rio_written(fd, buf, strlen(buf));
+    sprintf(buf, "Content-Type: text/html\r\n");   
+    Rio_written(fd, buf, strlen(buf));
+    sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
+    Rio_written(fd, buf, strlen(buf));
+    
+    // BODY
+	sprintf(body, "<html><head><title>NEW SERVER</title></head><body><P>HTTP request method not supported.\r\n</p></BODY></HTML>\r\n");
+    Rio_written(fd, body, strlen(body));	
 }
   
