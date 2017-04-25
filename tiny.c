@@ -261,7 +261,17 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
 		if (uri[strlen(uri) - 1] == '/')
 			strcat(filename, "home.html");
 		return 1;
-	} else return 0;
+	} else {
+		ptr = index(uri, '?');
+		if (ptr) {
+			strcpy(cgiargs, ptr+1);
+			*ptr = '\0';
+		}  else 
+			strcpy( cgiargs, "");
+		strcpy(filename, ".");
+		strcat(filename, uri);
+		return 0;
+	} 
 } 
 
 void serve_static(int fd, char *filename, int filesize)
@@ -297,7 +307,19 @@ void get_filetype(char *filename, char *filetype)
 
 void serve_dynamic(int fd, char *filename, char *cgiargs)
 {
+	char buf[MAXLINE], *emptylist[] = { NULL };
 	
+	sprintf(buf, "HTTP/1.1 200 OK\r\n");
+	Rio_written(fd, buf, strlen(buf));
+	sprintf(buf, "Server: Tiny Server\r\n");
+	Rio_written(fd, buf, strlen(buf));
+	
+	if (Fork() == 0) {
+		setenv("QUERY_STRING", cgiargs, 1);
+		Dup2(fd, STDOUT_FILENO);
+		Execve(filename, emptylist, environ);
+	} 
+	Wait(NULL);
 }
 
 void client_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) 
