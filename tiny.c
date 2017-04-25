@@ -188,10 +188,11 @@ void doit(int fd)
 		client_error(fd, method, "501", "未实现" , "服务器未实现该方法");
 		return ;
 	}
-	
-	read_requesthdrs(&rio);  // 处理报头 
-	
+	fprintf(stderr, "haha");
+	//read_requesthdrs(&rio);  // 处理报头 
+	fprintf(stderr, "youyou");
 	is_static = parse_uri(uri, filename, cgiargs); 
+	fprintf(stderr, "is_static:%d", is_static);
 	if (stat(filename, &sbuf) < 0) {
 		client_error(fd, filename, "404", "Not Found", "Can not find this file");
 		return;
