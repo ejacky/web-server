@@ -98,7 +98,8 @@ ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
 /* 主文件 */ 
 void doit(int fd);
 int open_listenfd(int port);
-void client_error(int fd);
+void client_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+void read_requesthdrs(rio_t *rp);
 
 int main(int argc, char **argv)
 {
@@ -112,7 +113,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	port = atoi(argv[1]);
-	fprintf(stderr, "port:%d", port); 
+	printf("port:%d", port); 
 	
 	if ((listenfd = open_listenfd(port)) < 0) {
 		unix_error("open listenfd error");
@@ -134,22 +135,32 @@ int main(int argc, char **argv)
 void doit(int fd)
 {
 	char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+	char filename[MAXLINE], cgiargs[MAXLINE];
+	int is_static;
 	rio_t rio;
 	
 	rio_readinitb(&rio, fd);
 	rio_readlineb(&rio, buf, MAXLINE);
 	sscanf(buf, "%s %s %s", method, uri, version);
-	fprintf(stderr, "||method:%s", method);
-	fprintf(stderr, "||method:%s", uri);
-	fprintf(stderr, "||method:%s", version);
 	
-	fprintf(stderr, "strcasecmp:%d", strcasecmp(method, "GET")); 
-
 	if (strcasecmp(method, "GET")) { // 若不为 GET 
-		fprintf(stderr, "haha"); 
 
-		client_error(fd);
+		client_error(fd, method, "501", "未实现" , "服务器未实现该方法");
 		return ;
+	}
+	
+	read_requesthdrs(&rio);  // 处理报头 
+	
+	is_static = parse_uri(uri, filename, cgiargs); 
+	if (stat(filename, &sbuf) < 0) {
+		client_error(fd, filename, "404", "Not Found", "Can not find this file");
+		return;
+	}
+	
+	if (is_static) {
+		
+	} else {
+		 
 	}
 }
 
@@ -183,22 +194,57 @@ int open_listenfd(int port)
 	return listenfd;
 }
 
-void client_error(int fd) 
+void read_requesthdrs(rio_t *rp)
+{
+	char buf[MAXLINE];
+	
+	rio_readlineb(rp, buf, MAXLINE); 
+	while (strcmp(buf, "\r\n")) {
+		rio_readlineb(rp, buf, MAXLINE);	
+		printf("%s", buf);
+//		fprintf(stderr, "%s"); 
+//		fprintf(stderr, "%s", buf); 
+	}
+	return;
+}
+
+int parse_uri(char *uri, char *filename, char *cgiargs)
+{
+	char *ptr;
+	
+	if (!strstr(uri, "cgi-bin")) {
+		strcpy(cgiargs, "");
+		strcpy(filename, ".");
+		strcat(filename, uri);
+		if (uri[strlen(uri) - 1] == '/')
+			strcat(filename, "home.html");
+		return 1;
+	} else return 0;
+} 
+
+void client_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) 
 {
 	char buf[MAXLINE], body[MAXBUF];
     
-    // HEADER
-    sprintf(buf, "HTTP/1.0 501 Method Not Implemented\r\n");
+    // BODY
+    sprintf(body, "<html  lang=""zh""><head><meta charset=""UTF-8""><title>NEW SERVER</title><head>");
+    sprintf(body, "%s<body>\r\n", body);
+    sprintf(body, "%s%s: %s\r\n", body, errnum, shortmsg);
+    sprintf(body, "%s<p>%s: %s\r\n", body, longmsg, cause);
+    sprintf(body, "%s<hr><em>Tiny server</em>\r\n", body);
+    sprintf(body, "%s </body></html>", body);
+	//sprintf(body, "<html><head><title>NEW SERVER</title></head><body><P>HTTP request method not supported.\r\n</p></BODY></HTML>\r\n");
+    
+	// HEADER
+    sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
     Rio_written(fd, buf, strlen(buf));
     sprintf(buf, "Server: Tiny Server\r\n");
     Rio_written(fd, buf, strlen(buf));
     sprintf(buf, "Content-Type: text/html\r\n");   
     Rio_written(fd, buf, strlen(buf));
-    sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
+    sprintf(buf, "Content-length: 150\r\n\r\n");
     Rio_written(fd, buf, strlen(buf));
     
-    // BODY
-	sprintf(body, "<html><head><title>NEW SERVER</title></head><body><P>HTTP request method not supported.\r\n</p></BODY></HTML>\r\n");
-    Rio_written(fd, body, strlen(body));	
+	Rio_written(fd, body, strlen(body));	
 }
   
