@@ -13,4 +13,4 @@ a web server  , written by c language
 # 使用
 - 静态访问： http://host/home.html
 - 动态访问:  http://host/cgi-bin/addr?30&90
-  得到结构 120 
+  得到结果 120 
