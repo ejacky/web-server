@@ -9,3 +9,8 @@ a web server  , written by c language
 - [ ] 用 php 执行动态服务 
 - [ ] fork 函数 
 - [ ] 将 头文件， 通用文件， 从主文件分离 
+
+# 使用
+- 静态访问： http://host/home.html
+- 动态访问:  http://host/cgi-bin/addr?30&90
+  得到结构 120 
