@@ -5,8 +5,8 @@ a web server  , written by c language
 - [ ] response 超过 150 ，则 无法访问
 - [ ] printf 无法在命令行显示。但在 read_requesthdrs 函数中却可以。 
 - [ ] 输出信息乱码
-- [v] 测试并发量， 目前太小 
-	 
+- [ ] 测试并发量， 目前太小 
+	  初步解决， 通过调大 listen 队列 
 - [ ] 用 php 执行动态服务 
 - [ ] fork 函数 
 - [ ] 将 头文件， 通用文件， 从主文件分离 
