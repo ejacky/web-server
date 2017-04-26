@@ -227,7 +227,7 @@ void doit(int fd)
 	fprintf(stderr, "youyou");
 	is_static = parse_uri(uri, filename, cgiargs); 
 	fprintf(stderr, "is_static:%d", is_static);
-	if (stat(filename, &sbuf) < 0) {
+	if (stat(filename, &sbuf)  < 0) {
 		client_error(fd, filename, "404", "Not Found", "Can not find this file");
 		return;
 	}
@@ -342,7 +342,9 @@ void get_filetype(char *filename, char *filetype)
 void serve_dynamic(int fd, char *filename, char *cgiargs)
 {
 	char buf[MAXLINE], *emptylist[] = { NULL };
+	extern char **environ;
 	
+	fprintf(stderr, "||cgiargs= %s", cgiargs);
 	sprintf(buf, "HTTP/1.1 200 OK\r\n");
 	Rio_written(fd, buf, strlen(buf));
 	sprintf(buf, "Server: Tiny Server\r\n");
