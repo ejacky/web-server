@@ -7,3 +7,5 @@ a web server  , written by c language
 - [ ] 输出信息乱码
 - [ ] 测试并发量， 目前太小 
 - [ ] 用 php 执行动态服务 
+- [ ] fork 函数 
+- [ ] 将 头文件， 通用文件， 从主文件分离 
