@@ -15,3 +15,7 @@ a web server  , written by c language
 - 静态访问： http://host/home.html
 - 动态访问:  http://host/cgi-bin/addr?30&90
   得到结果 120 
+  
+  
+# 压力测试
+- ab -n10000 -c 1000 http://localhost/demo 
